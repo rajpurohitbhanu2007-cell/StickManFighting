@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STICK CLASH: STAT OVERLOAD</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div id="game-root">
+        <!-- 16:9 Viewport -->
+        <div id="canvas-viewport">
+            <canvas id="gameCanvas" tabindex="0"></canvas>
+            <div class="crt-overlay" id="crtOverlay"></div>
+
+            <!-- Top Nav Bar -->
+            <div class="top-nav-bar">
+                <button class="nav-btn" id="btnFullscreen">⛶ FULLSCREEN [F]</button>
+                <button class="nav-btn" id="btnAudioToggle">🔊 SFX: ON</button>
+                <button class="nav-btn" id="btnMusicToggle">🎵 BGM: ON</button>
+                <button class="nav-btn" id="btnToggleHud" style="display: none;" title="Toggle On-Screen Move Buttons [Tab]">⌨ HUD: ON</button>
+                <button class="nav-btn" id="btnRematch" style="display: none;">🔄 REMATCH</button>
+                <button class="nav-btn" id="btnGoRoster" style="display: none;">⚙️ ROSTER</button>
+                <button class="nav-btn" id="btnGoTitle" style="display: none;">🏠 TITLE</button>
+            </div>
+
+            <!-- ============================================================
+                 SCREEN 1: CINEMATIC TITLE MENU (Inspired by Arco)
+                 ============================================================ -->
+            <div class="title-screen" id="titleScreen">
+                <div class="title-header">
+                    <h1 class="title-logo">STICK CLASH</h1>
+                    <span class="title-tagline">STAT OVERLOAD • CPS-2 COMBAT ENGINE</span>
+                </div>
+
+                <div class="title-menu-options">
+                    <button class="title-menu-btn active" id="titleBtnDummy">▶ PRACTICE DUMMY</button>
+                    <button class="title-menu-btn" id="titleBtnCpu">⚔️ VS CPU (BATTLE AI)</button>
+                    <button class="title-menu-btn" id="titleBtnRoster">⚙️ ROSTER & BUILDS</button>
+                    <button class="title-menu-btn" id="titleBtnFull">⛶ TOGGLE FULLSCREEN</button>
+                </div>
+
+                <div class="title-footer-tips">
+                    <span>CLICK ANY BUTTON OR PRESS [F] FOR FULLSCREEN • 6-BUTTON CAPCOM SUITE</span>
+                </div>
+            </div>
+
+            <!-- ============================================================
+                 SCREEN 2: ROSTER & STAT SELECTION (Inspired by BuildMenu)
+                 ============================================================ -->
+            <div class="roster-screen hidden" id="rosterScreen">
+                <div class="roster-header">
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div class="roster-title">SELECT FIGHTER BUILD</div>
+                            <div class="roster-target-tabs">
+                                <button class="target-tab-btn active" id="tabTargetP1">👤 CONFIGURE P1</button>
+                                <button class="target-tab-btn" id="tabTargetP2">🤖 CONFIGURE CPU / DUMMY</button>
+                            </div>
+                        </div>
+                        <div class="roster-mode-badge" id="rosterModeBadge">MODE: PRACTICE DUMMY</div>
+                    </div>
+                </div>
+
+                <div class="roster-body">
+                    <!-- Left: Selected Fighter Showcase -->
+                    <div class="roster-showcase">
+                        <div>
+                            <div class="fighter-name-display" id="showcaseName">THE BALANCED</div>
+                            <div class="fighter-archetype-tag" id="showcaseTag">ALL-ROUNDER MARTIAL ARTIST</div>
+
+                            <!-- Segmented Stat Bars -->
+                            <div class="segmented-stats-wrap">
+                                <div class="stat-bar-item">
+                                    <span class="stat-label-text str-color">STR</span>
+                                    <div class="stat-segments-track" id="trackStr"></div>
+                                    <span class="stat-num-val str-color" id="valStr">5</span>
+                                </div>
+                                <div class="stat-bar-item">
+                                    <span class="stat-label-text spd-color">SPD</span>
+                                    <div class="stat-segments-track" id="trackSpd"></div>
+                                    <span class="stat-num-val spd-color" id="valSpd">5</span>
+                                </div>
+                                <div class="stat-bar-item">
+                                    <span class="stat-label-text def-color">DEF</span>
+                                    <div class="stat-segments-track" id="trackDef"></div>
+                                    <span class="stat-num-val def-color" id="valDef">5</span>
+                                </div>
+                            </div>
+
+                            <!-- Special Move Card -->
+                            <div class="special-move-card">
+                                <div class="special-name" id="showcaseSpecialName">SPECIAL: DRAGON FLURRY</div>
+                                <div class="special-desc" id="showcaseSpecialDesc">Chains rapid punches into a soaring dragon uppercut.</div>
+                            </div>
+                        </div>
+
+                        <!-- Live Skeletal Canvas Preview -->
+                        <div class="roster-preview-box">
+                            <canvas id="rosterPreviewCanvas" width="280" height="165"></canvas>
+                        </div>
+
+                        <div style="font-size: 0.70rem; color: #64748b; text-align: center; margin-top: 4px;">
+                            LIVE SKELETAL PREVIEW • ARMORED PLATES SCALED BY DEFENSE
+                        </div>
+                    </div>
+
+                    <!-- Right: Archetype Cards Grid -->
+                    <div class="roster-grid-wrap">
+                        <div class="roster-cards-grid" id="rosterCardsGrid">
+                            <!-- Cards generated by JS -->
+                        </div>
+
+                        <!-- Bottom Controls -->
+                        <div class="roster-bottom-bar">
+                            <button class="roster-back-btn" id="btnRosterBack">🏠 MAIN MENU</button>
+
+                            <div class="stage-selector-wrap">
+                                <button class="stage-arrow-btn" id="btnStagePrev" title="Previous Arena">◀</button>
+                                <div class="stage-info-pill">
+                                    <span class="stage-label">ARENA:</span>
+                                    <span class="stage-name-text" id="stageNameText">MOONLIT CITADEL</span>
+                                </div>
+                                <button class="stage-arrow-btn" id="btnStageNext" title="Next Arena">▶</button>
+                            </div>
+
+                            <div class="mode-toggle-group">
+                                <button class="mode-toggle-btn active" id="btnModeDummy">DUMMY LAB</button>
+                                <button class="mode-toggle-btn" id="btnModeCpu">VS CPU</button>
+                            </div>
+
+                            <div class="matchup-preview-pill">
+                                <span class="matchup-p1-text" id="matchupP1Text">P1: THE BALANCED</span>
+                                <span class="matchup-vs">VS</span>
+                                <span class="matchup-p2-text" id="matchupP2Text">CPU: THE FORTRESS</span>
+                            </div>
+
+                            <button class="start-clash-btn" id="btnStartFight">START FIGHT ▶</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
+                 SCREEN 3: INTERACTIVE ON-SCREEN COMBAT BUTTONS (With Pixel Keycaps)
+                 ============================================================ -->
+            <div class="combat-hud-overlay hidden" id="combatHudOverlay">
+                <!-- Left Cluster: Movement, Punches & Kicks -->
+                <div class="combat-cluster">
+                    <div class="combat-sub-row">
+                        <button class="combat-hud-btn holdable" data-action="LEFT"><span class="keycaps-pair"><img src="assets/ui/keys/key_a.png" class="k-cap" alt="A" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>A</span>'"/><img src="assets/ui/keys/key_arrow_left.png" class="k-cap" alt="◀" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>◀</span>'"/></span> LEFT</button>
+                        <button class="combat-hud-btn holdable" data-action="CROUCH"><span class="keycaps-pair"><img src="assets/ui/keys/key_s.png" class="k-cap" alt="S" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>S</span>'"/><img src="assets/ui/keys/key_arrow_down.png" class="k-cap" alt="▼" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>▼</span>'"/></span> CROUCH</button>
+                        <button class="combat-hud-btn holdable" data-action="RIGHT"><span class="keycaps-pair"><img src="assets/ui/keys/key_d.png" class="k-cap" alt="D" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>D</span>'"/><img src="assets/ui/keys/key_arrow_right.png" class="k-cap" alt="▶" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>▶</span>'"/></span> RIGHT</button>
+                    </div>
+                    <div class="combat-sub-row">
+                        <button class="combat-hud-btn" data-action="LP"><span class="keycaps-pair"><img src="assets/ui/keys/key_7.png" class="k-cap" alt="7" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>7</span>'"/><img src="assets/ui/keys/key_u.png" class="k-cap" alt="U" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>U</span>'"/></span> LP JAB</button>
+                        <button class="combat-hud-btn" data-action="MP"><span class="keycaps-pair"><img src="assets/ui/keys/key_8.png" class="k-cap" alt="8" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>8</span>'"/><img src="assets/ui/keys/key_i.png" class="k-cap" alt="I" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>I</span>'"/></span> MP CROSS</button>
+                        <button class="combat-hud-btn" data-action="HP"><span class="keycaps-pair"><img src="assets/ui/keys/key_9.png" class="k-cap" alt="9" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>9</span>'"/><img src="assets/ui/keys/key_o.png" class="k-cap" alt="O" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>O</span>'"/></span> HP SMASH</button>
+                    </div>
+                    <div class="combat-sub-row">
+                        <button class="combat-hud-btn" data-action="LK"><span class="keycaps-pair"><img src="assets/ui/keys/key_4.png" class="k-cap" alt="4" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>4</span>'"/><img src="assets/ui/keys/key_j.png" class="k-cap" alt="J" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>J</span>'"/></span> LK SHIN</button>
+                        <button class="combat-hud-btn" data-action="MK"><span class="keycaps-pair"><img src="assets/ui/keys/key_5.png" class="k-cap" alt="5" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>5</span>'"/><img src="assets/ui/keys/key_k.png" class="k-cap" alt="K" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>K</span>'"/></span> MK ROUNDHOUSE</button>
+                        <button class="combat-hud-btn" data-action="HK"><span class="keycaps-pair"><img src="assets/ui/keys/key_6.png" class="k-cap" alt="6" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>6</span>'"/><img src="assets/ui/keys/key_l.png" class="k-cap" alt="L" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>L</span>'"/></span> HK LAUNCHER</button>
+                    </div>
+                </div>
+
+                <!-- Right Cluster: Movement & Specials -->
+                <div class="combat-cluster combat-cluster-right">
+                    <div class="combat-sub-row">
+                        <button class="combat-hud-btn" data-action="JUMP"><span class="keycaps-pair"><img src="assets/ui/keys/key_space.png" class="k-cap" alt="SPACE" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>SPACE</span>'"/></span> JUMP</button>
+                        <button class="combat-hud-btn" data-action="DASH"><span class="keycaps-pair"><img src="assets/ui/keys/key_2.png" class="k-cap" alt="2" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>2</span>'"/><img src="assets/ui/keys/key_n.png" class="k-cap" alt="N" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>N</span>'"/></span> DASH</button>
+                    </div>
+                    <div class="combat-sub-row">
+                        <button class="combat-hud-btn btn-throw" data-action="THROW"><span class="keycaps-pair"><img src="assets/ui/keys/key_h.png" class="k-cap" alt="H" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>H</span>'"/><img src="assets/ui/keys/key_shift.png" class="k-cap" alt="Shift" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>SHIFT</span>'"/></span> THROW</button>
+                        <button class="combat-hud-btn btn-parry" data-action="PARRY"><span class="keycaps-pair"><img src="assets/ui/keys/key_p.png" class="k-cap" alt="P" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>P</span>'"/><img src="assets/ui/keys/key_plus.png" class="k-cap" alt="+" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>+</span>'"/></span> PARRY</button>
+                    </div>
+                    <div class="combat-sub-row">
+                        <button class="combat-hud-btn btn-drive" data-action="DRIVE_IMPACT"><span class="keycaps-pair"><img src="assets/ui/keys/key_0.png" class="k-cap" alt="0" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>0</span>'"/><img src="assets/ui/keys/key_y.png" class="k-cap" alt="Y" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>Y</span>'"/></span> DRIVE IMPACT</button>
+                        <button class="combat-hud-btn btn-super highlight-super" data-action="SUPER"><span class="keycaps-pair"><img src="assets/ui/keys/key_1.png" class="k-cap" alt="1" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>1</span>'"/><img src="assets/ui/keys/key_g.png" class="k-cap" alt="G" onerror="this.outerHTML='<span class=\'k-pill-fallback\'>G</span>'"/></span> OVERDRIVE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/audio.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/physics.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/fighter.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/game.js"></script>
+
+    <!-- UI Controller -->
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const game = new window.GameEngine();
+            window.activeGame = game;
+
+            // DOM Elements
+            const titleScreen = document.getElementById('titleScreen');
+            const rosterScreen = document.getElementById('rosterScreen');
+            const combatHudOverlay = document.getElementById('combatHudOverlay');
+            const btnGoRoster = document.getElementById('btnGoRoster');
+            const btnGoTitle = document.getElementById('btnGoTitle');
+            const btnRematch = document.getElementById('btnRematch');
+            const btnFullscreen = document.getElementById('btnFullscreen');
+            const btnAudioToggle = document.getElementById('btnAudioToggle');
+            const btnMusicToggle = document.getElementById('btnMusicToggle');
+
+            const titleBtnDummy = document.getElementById('titleBtnDummy');
+            const titleBtnCpu = document.getElementById('titleBtnCpu');
+            const titleBtnRoster = document.getElementById('titleBtnRoster');
+            const titleBtnFull = document.getElementById('titleBtnFull');
+
+            const showcaseName = document.getElementById('showcaseName');
+            const showcaseTag = document.getElementById('showcaseTag');
+            const showcaseSpecialName = document.getElementById('showcaseSpecialName');
+            const showcaseSpecialDesc = document.getElementById('showcaseSpecialDesc');
+            const trackStr = document.getElementById('trackStr');
+            const trackSpd = document.getElementById('trackSpd');
+            const trackDef = document.getElementById('trackDef');
+            const valStr = document.getElementById('valStr');
+            const valSpd = document.getElementById('valSpd');
+            const valDef = document.getElementById('valDef');
+            const rosterCardsGrid = document.getElementById('rosterCardsGrid');
+
+            const btnModeDummy = document.getElementById('btnModeDummy');
+            const btnModeCpu = document.getElementById('btnModeCpu');
+            const btnStartFight = document.getElementById('btnStartFight');
+            const btnRosterBack = document.getElementById('btnRosterBack');
+            const rosterModeBadge = document.getElementById('rosterModeBadge');
+
+            const btnStagePrev = document.getElementById('btnStagePrev');
+            const btnStageNext = document.getElementById('btnStageNext');
+            const stageNameText = document.getElementById('stageNameText');
+
+            const previewCanvas = document.getElementById('rosterPreviewCanvas');
+            const previewCtx = previewCanvas ? previewCanvas.getContext('2d') : null;
+
+            // Ensure sound context starts on any user interaction
+            window.addEventListener('pointerdown', () => {
+                if (window.soundSystem) window.soundSystem.init();
+            }, { once: false });
+
+            // Render Segmented Stat Pips (10 segments)
+            function renderPips(container, value, type) {
+                container.innerHTML = '';
+                for (let i = 1; i <= 10; i++) {
+                    const pip = document.createElement('div');
+                    pip.className = 'stat-pip' + (i <= value ? ` filled ${type}` : '');
+                    container.appendChild(pip);
+                }
+            }
+
+            // Roster Target Configuration (Player 1 vs CPU/Dummy Build Selection)
+            let rosterTarget = 'P1'; // 'P1' or 'P2'
+            const tabTargetP1 = document.getElementById('tabTargetP1');
+            const tabTargetP2 = document.getElementById('tabTargetP2');
+            const matchupP1Text = document.getElementById('matchupP1Text');
+            const matchupP2Text = document.getElementById('matchupP2Text');
+
+            function updateMatchupDisplay() {
+                if (matchupP1Text) {
+                    matchupP1Text.innerText = `P1: ${game.p1Build.name.toUpperCase()}`;
+                    matchupP1Text.style.color = game.p1Build.palette ? game.p1Build.palette.primary : '#38bdf8';
+                }
+                if (matchupP2Text) {
+                    matchupP2Text.innerText = `CPU: ${game.p2Build.name.toUpperCase()}`;
+                    matchupP2Text.style.color = game.p2Build.palette ? game.p2Build.palette.primary : '#eab308';
+                }
+            }
+
+            // Resilient button click handler (handles WebView2 window-activation quirks)
+            function attachButtonAction(btn, action) {
+                if (!btn) return;
+                let lastTrigger = 0;
+                const fire = (e) => {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    const now = Date.now();
+                    if (now - lastTrigger < 220) return; // Prevent double invocation
+                    lastTrigger = now;
+                    if (window.soundSystem) window.soundSystem.init();
+                    action(e);
+                };
+                btn.addEventListener('click', fire);
+                btn.addEventListener('pointerup', (e) => {
+                    if (e.button === 0) fire(e);
+                });
+            }
+
+            function setRosterTarget(target) {
+                rosterTarget = target;
+                if (tabTargetP1) tabTargetP1.classList.toggle('active', target === 'P1');
+                if (tabTargetP2) tabTargetP2.classList.toggle('active', target === 'P2');
+
+                const currentBuild = (target === 'P1') ? game.p1Build : game.p2Build;
+                showcaseArchetype(currentBuild);
+                updateCardHighlights();
+                if (window.soundSystem) window.soundSystem.playSelect();
+            }
+
+            if (tabTargetP1) attachButtonAction(tabTargetP1, () => setRosterTarget('P1'));
+            if (tabTargetP2) attachButtonAction(tabTargetP2, () => setRosterTarget('P2'));
+
+            // Populate Roster Cards Grid
+            function populateCards() {
+                rosterCardsGrid.innerHTML = '';
+                const archetypes = window.PRESET_ARCHETYPES || PRESET_ARCHETYPES;
+                Object.values(archetypes).forEach(arch => {
+                    const card = document.createElement('div');
+                    card.className = 'roster-card';
+                    card.dataset.id = arch.id;
+                    card.innerHTML = `
+                        <div class="card-top-row">
+                            <span class="card-name">${arch.name}</span>
+                            <div class="card-badges-wrap">
+                                <span class="card-role-badge">${arch.str >= 7 ? 'POWER' : (arch.spd >= 7 ? 'SPEED' : (arch.def >= 7 ? 'TANK' : 'BALANCED'))}</span>
+                                <span class="card-target-tag tag-p1 ${game.p1Build.id === arch.id ? 'visible' : ''}">P1</span>
+                                <span class="card-target-tag tag-p2 ${game.p2Build.id === arch.id ? 'visible' : ''}">CPU</span>
+                            </div>
+                        </div>
+                        <div class="card-mini-stats">
+                            <span>STR: ${arch.str}</span>
+                            <span>SPD: ${arch.spd}</span>
+                            <span>DEF: ${arch.def}</span>
+                        </div>
+                    `;
+                    attachButtonAction(card, () => {
+                        selectArchetype(arch.id);
+                        if (window.soundSystem) window.soundSystem.playSelect();
+                    });
+                    rosterCardsGrid.appendChild(card);
+                });
+                updateCardHighlights();
+                updateMatchupDisplay();
+            }
+
+            function selectArchetype(id) {
+                const archetypes = window.PRESET_ARCHETYPES || PRESET_ARCHETYPES;
+                const arch = archetypes[id];
+                if (!arch) return;
+
+                if (rosterTarget === 'P1') {
+                    game.p1Build = { ...arch };
+                } else {
+                    game.p2Build = { ...arch };
+                }
+
+                showcaseArchetype(arch);
+                updateCardHighlights();
+                updateMatchupDisplay();
+            }
+
+            function showcaseArchetype(arch) {
+                showcaseName.innerText = arch.name.toUpperCase();
+                showcaseTag.innerText = `${rosterTarget === 'P1' ? '👤 PLAYER 1 BUILD • ' : '🤖 CPU/DUMMY BUILD • '}${arch.tag}`;
+                showcaseSpecialName.innerText = `SPECIAL: ${arch.specialName}`;
+                showcaseSpecialDesc.innerText = arch.specialDesc;
+
+                valStr.innerText = arch.str;
+                valSpd.innerText = arch.spd;
+                valDef.innerText = arch.def;
+                renderPips(trackStr, arch.str, 'str');
+                renderPips(trackSpd, arch.spd, 'spd');
+                renderPips(trackDef, arch.def, 'def');
+
+                // Update Preview Fighter
+                if (game.previewFighter) {
+                    game.previewFighter.stats.str = arch.str;
+                    game.previewFighter.stats.spd = arch.spd;
+                    game.previewFighter.stats.def = arch.def;
+                    game.previewFighter.palette = arch.palette;
+                    game.previewFighter.applyStats();
+                    game.previewFighter.startAttack('LP'); // Flourish strike
+                }
+            }
+
+            function updateCardHighlights() {
+                const activeId = (rosterTarget === 'P1') ? game.p1Build.id : game.p2Build.id;
+                document.querySelectorAll('.roster-card').forEach(c => {
+                    const id = c.dataset.id;
+                    c.classList.toggle('active', id === activeId);
+                    c.classList.toggle('active-p1', id === game.p1Build.id);
+                    c.classList.toggle('active-p2', id === game.p2Build.id);
+                    const tagP1 = c.querySelector('.tag-p1');
+                    const tagP2 = c.querySelector('.tag-p2');
+                    if (tagP1) tagP1.classList.toggle('visible', id === game.p1Build.id);
+                    if (tagP2) tagP2.classList.toggle('visible', id === game.p2Build.id);
+                });
+            }
+
+            // Live Preview Canvas Loop
+            function renderRosterPreview() {
+                if (game && game.gameState === 'SELECT' && game.previewFighter && previewCtx && window.stickRenderer) {
+                    previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+                    previewCtx.save();
+                    previewCtx.translate(previewCanvas.width / 2, previewCanvas.height - 35);
+
+                    // Pedestal Glow
+                    const pulse = Math.sin(Date.now() * 0.005) * 0.08 + 0.28;
+                    previewCtx.fillStyle = `rgba(56, 189, 248, ${pulse})`;
+                    previewCtx.beginPath();
+                    previewCtx.ellipse(0, 0, 52, 12, 0, 0, Math.PI * 2);
+                    previewCtx.fill();
+                    previewCtx.strokeStyle = '#38bdf8';
+                    previewCtx.lineWidth = 1.5;
+                    previewCtx.stroke();
+
+                    // Temporarily anchor fighter to center
+                    const origX = game.previewFighter.x;
+                    const origY = game.previewFighter.y;
+                    game.previewFighter.x = 0;
+                    game.previewFighter.y = 0;
+                    game.previewFighter.isGrounded = true;
+
+                    // Also anchor scarf points to center so they don't draw off-canvas
+                    if (game.previewFighter.scarfPoints) {
+                        for (let i = 0; i < game.previewFighter.scarfPoints.length; i++) {
+                            const p = game.previewFighter.scarfPoints[i];
+                            p.x = -game.previewFighter.facing * i * 4;
+                            p.y = -48;
+                            p.oldX = p.x;
+                            p.oldY = p.y;
+                        }
+                    }
+
+                    try {
+                        window.stickRenderer.render(previewCtx, game.previewFighter);
+                    } catch (e) {
+                        console.error('Preview render error:', e);
+                    }
+
+                    game.previewFighter.x = origX;
+                    game.previewFighter.y = origY;
+                    previewCtx.restore();
+                }
+                requestAnimationFrame(renderRosterPreview);
+            }
+            requestAnimationFrame(renderRosterPreview);
+
+            // Mode switching
+            function setMode(mode) {
+                game.gameMode = mode;
+                btnModeDummy.classList.toggle('active', mode === 'DUMMY');
+                btnModeCpu.classList.toggle('active', mode === 'PVE');
+                rosterModeBadge.innerText = `MODE: ${mode === 'DUMMY' ? 'PRACTICE DUMMY (SANDBAG)' : 'VS CPU (BATTLE AI)'}`;
+            }
+
+            attachButtonAction(btnModeDummy, () => setMode('DUMMY'));
+            attachButtonAction(btnModeCpu, () => setMode('PVE'));
+
+            // Stage Selection
+            const stages = window.STAGE_PRESETS || [
+                { id: 'citadel', name: 'MOONLIT CITADEL' },
+                { id: 'lava_throne', name: 'LAVA THRONE', accent: '#ef4444' },
+                { id: 'mountain_balcony', name: 'MOUNTAIN BALCONY', accent: '#38bdf8' },
+                { id: 'arcane_grimoire', name: 'ARCANE GRIMOIRE', accent: '#a855f7' },
+                { id: 'crystal_cavern', name: 'CRYSTAL CAVERN', accent: '#06b6d4' },
+                { id: 'inferno_cave', name: 'INFERNO CAVE', accent: '#f97316' },
+                { id: 'dark_pentagram', name: 'DARK SANCTUM', accent: '#dc2626' },
+                { id: 'astral_portal', name: 'ASTRAL PORTAL', accent: '#38bdf8' },
+                { id: 'crimson_crystal', name: 'CRIMSON CRYSTAL', accent: '#f43f5e' },
+                { id: 'dusk_pillars', name: 'DUSK PILLARS', accent: '#eab308' },
+                { id: 'enchanted_forest', name: 'ENCHANTED FOREST', accent: '#10b981' },
+                { id: 'ritual_circle', name: 'RITUAL CIRCLE', accent: '#f59e0b' },
+                { id: 'magma_chasm', name: 'MAGMA CHASM', accent: '#ea580c' }
+            ];
+            let currentStageIndex = 0;
+
+            function updateStageDisplay() {
+                const stg = stages[currentStageIndex];
+                game.currentStage = stg.id;
+                stageNameText.innerText = stg.name;
+                stageNameText.style.color = stg.accent || '#facc15';
+            }
+
+            if (btnStagePrev) {
+                attachButtonAction(btnStagePrev, () => {
+                    currentStageIndex = (currentStageIndex - 1 + stages.length) % stages.length;
+                    updateStageDisplay();
+                    if (window.soundSystem) window.soundSystem.playSelect();
+                });
+            }
+
+            if (btnStageNext) {
+                attachButtonAction(btnStageNext, () => {
+                    currentStageIndex = (currentStageIndex + 1) % stages.length;
+                    updateStageDisplay();
+                    if (window.soundSystem) window.soundSystem.playSelect();
+                });
+            }
+
+            // Navigation Flow
+            const btnToggleHud = document.getElementById('btnToggleHud');
+            let hudVisible = true;
+            window.toggleCombatHud = function() {
+                hudVisible = !hudVisible;
+                if (hudVisible) {
+                    combatHudOverlay.classList.remove('hidden');
+                    if (btnToggleHud) btnToggleHud.innerText = '⌨ HUD: ON';
+                } else {
+                    combatHudOverlay.classList.add('hidden');
+                    if (btnToggleHud) btnToggleHud.innerText = '⌨ HUD: OFF';
+                }
+            };
+            if (btnToggleHud) {
+                attachButtonAction(btnToggleHud, window.toggleCombatHud);
+            }
+
+            function showTitle() {
+                game.gameState = 'TITLE';
+                titleScreen.classList.remove('hidden');
+                rosterScreen.classList.add('hidden');
+                combatHudOverlay.classList.add('hidden');
+                btnGoRoster.style.display = 'none';
+                btnGoTitle.style.display = 'none';
+                btnRematch.style.display = 'none';
+                if (btnToggleHud) btnToggleHud.style.display = 'none';
+                if (window.soundSystem) {
+                    window.soundSystem.playSelect();
+                    window.soundSystem.stopBGM();
+                }
+            }
+
+            function showRoster(defaultMode = 'DUMMY') {
+                game.gameState = 'SELECT';
+                setMode(defaultMode);
+                titleScreen.classList.add('hidden');
+                rosterScreen.classList.remove('hidden');
+                combatHudOverlay.classList.add('hidden');
+                btnGoRoster.style.display = 'none';
+                btnGoTitle.style.display = 'inline-block';
+                btnRematch.style.display = 'none';
+                if (btnToggleHud) btnToggleHud.style.display = 'none';
+                selectArchetype(game.p1Build.id || 'balanced');
+                updateStageDisplay();
+                if (window.soundSystem) window.soundSystem.playSelect();
+            }
+
+            function enterFight(mode = null) {
+                if (mode) setMode(mode);
+                titleScreen.classList.add('hidden');
+                rosterScreen.classList.add('hidden');
+                if (hudVisible) combatHudOverlay.classList.remove('hidden');
+                btnGoRoster.style.display = 'inline-block';
+                btnGoTitle.style.display = 'inline-block';
+                btnRematch.style.display = 'inline-block';
+                if (btnToggleHud) btnToggleHud.style.display = 'inline-block';
+                game.startMatch();
+                if (window.soundSystem) window.soundSystem.startBGM();
+            }
+
+            // Title Menu Buttons: Instant response with pointerup/click fallback
+            attachButtonAction(titleBtnDummy, () => enterFight('DUMMY'));
+            attachButtonAction(titleBtnCpu, () => enterFight('PVE'));
+            attachButtonAction(titleBtnRoster, () => showRoster(game.gameMode));
+            attachButtonAction(titleBtnFull, () => game.toggleFullscreen());
+
+            // Top Nav Buttons
+            attachButtonAction(btnGoRoster, () => showRoster(game.gameMode));
+            attachButtonAction(btnGoTitle, () => showTitle());
+            attachButtonAction(btnRematch, () => game.startMatch());
+            attachButtonAction(btnFullscreen, () => game.toggleFullscreen());
+
+            attachButtonAction(btnAudioToggle, () => {
+                window.soundSystem.enabled = !window.soundSystem.enabled;
+                btnAudioToggle.innerText = `🔊 SFX: ${window.soundSystem.enabled ? 'ON' : 'OFF'}`;
+                btnAudioToggle.style.borderColor = window.soundSystem.enabled ? '#334155' : '#ef4444';
+            });
+
+            if (btnMusicToggle) {
+                attachButtonAction(btnMusicToggle, () => {
+                    const isMusicOn = window.soundSystem.toggleMusic();
+                    btnMusicToggle.innerText = `🎵 BGM: ${isMusicOn ? 'ON' : 'OFF'}`;
+                    btnMusicToggle.style.borderColor = isMusicOn ? '#334155' : '#ef4444';
+                });
+            }
+
+            // Start Fight & Back Buttons from Roster
+            attachButtonAction(btnStartFight, () => enterFight());
+            if (btnRosterBack) {
+                attachButtonAction(btnRosterBack, () => showTitle());
+            }
+
+            // ============================================================
+            // INTERACTIVE ON-SCREEN COMBAT BUTTONS WIRING
+            // Handles both mouse click and touch events with instant feedback!
+            // ============================================================
+            document.querySelectorAll('.combat-hud-btn').forEach(btn => {
+                const action = btn.dataset.action;
+                if (!action) return;
+
+                if (action === 'LEFT' || action === 'RIGHT' || action === 'CROUCH') {
+                    // Holdable Movement Buttons
+                    const setVirtual = (val) => {
+                        if (action === 'LEFT') game.virtualInputs.left = val;
+                        if (action === 'RIGHT') game.virtualInputs.right = val;
+                        if (action === 'CROUCH') game.virtualInputs.down = val;
+                        btn.classList.toggle('active-pressed', val);
+                    };
+
+                    btn.addEventListener('pointerdown', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setVirtual(true);
+                    });
+                    btn.addEventListener('pointerup', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setVirtual(false);
+                    });
+                    btn.addEventListener('pointerleave', () => setVirtual(false));
+                    btn.addEventListener('pointercancel', () => setVirtual(false));
+                } else {
+                    // Discrete Action Buttons
+                    btn.addEventListener('pointerdown', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        btn.classList.add('active-pressed');
+                        setTimeout(() => btn.classList.remove('active-pressed'), 120);
+
+                        if (game.p1) {
+                            game.p1.bufferInput(action);
+                            if (action === 'SUPER') window.soundSystem.playSuperCharge();
+                            else if (action === 'PARRY') window.soundSystem.playParry();
+                            else if (action === 'DRIVE_IMPACT') window.soundSystem.playSuperCharge();
+                            else if (action === 'JUMP') window.soundSystem.playJump();
+                            else if (action === 'DASH') window.soundSystem.playDash();
+                            else window.soundSystem.playSwing();
+                        }
+                    });
+                }
+            });
+
+            // Sync physical keyboard state to on-screen buttons
+            const actionKeyMap = {
+                'LP': ['Numpad7', 'KeyU', 'Digit7'],
+                'MP': ['Numpad8', 'KeyI', 'Digit8'],
+                'HP': ['Numpad9', 'KeyO', 'Digit9'],
+                'LK': ['Numpad4', 'KeyJ', 'Digit4'],
+                'MK': ['Numpad5', 'KeyK', 'Digit5'],
+                'HK': ['Numpad6', 'KeyL', 'Digit6'],
+                'JUMP': ['Space', 'KeyW', 'ArrowUp'],
+                'LEFT': ['KeyA', 'ArrowLeft'],
+                'RIGHT': ['KeyD', 'ArrowRight'],
+                'CROUCH': ['KeyS', 'ArrowDown'],
+                'DASH': ['Numpad2', 'KeyN', 'KeyM', 'Digit2'],
+                'THROW': ['KeyH', 'ShiftLeft', 'KeyT', 'KeyV'],
+                'PARRY': ['KeyP', 'NumpadAdd', 'Equal'],
+                'DRIVE_IMPACT': ['Numpad0', 'KeyY', 'Digit0'],
+                'SUPER': ['Numpad1', 'KeyG', 'KeyB', 'Digit1']
+            };
+
+            // Preload keycap icons gently in background so they don't congest initial startup
+            setTimeout(() => {
+                const keyNames = [
+                    '0','1','2','3','4','5','6','7','8','9',
+                    'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+                    'arrow_down','arrow_left','arrow_right','arrow_up','plus','shift','space'
+                ];
+                keyNames.forEach(k => {
+                    const img = new Image();
+                    img.src = `assets/ui/keys/key_${k}.png`;
+                });
+            }, 600);
+
+            window.addEventListener('keydown', (e) => {
+                for (const [action, keys] of Object.entries(actionKeyMap)) {
+                    if (keys.includes(e.code)) {
+                        const btn = document.querySelector(`.combat-hud-btn[data-action="${action}"]`);
+                        if (btn) btn.classList.add('active-pressed');
+                    }
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                for (const [action, keys] of Object.entries(actionKeyMap)) {
+                    if (keys.includes(e.code)) {
+                        const btn = document.querySelector(`.combat-hud-btn[data-action="${action}"]`);
+                        if (btn) btn.classList.remove('active-pressed');
+                    }
+                }
+            });
+
+            // Initialize
+            populateCards();
+            selectArchetype('balanced');
+            updateStageDisplay();
+            renderPips(trackStr, 5, 'str');
+            renderPips(trackSpd, 5, 'spd');
+            renderPips(trackDef, 5, 'def');
+        });
+    </script>
+</body>
+</html>
